@@ -1,7 +1,7 @@
 #include "cron.h"
 #include <stdio.h>
 
-int main(int argc, char **argv)
+int _main(int argc, char **argv)
 {
     schedule_t s;
 
@@ -24,17 +24,12 @@ int main(int argc, char **argv)
         0,
     };
 
-    char *spec_t[] = {
-        "0 0 1,3,21,5-20/2 */5 1,10 *",
-        "9 1 /2 */5 1,10 *",
-        0,
-    };
-
+    int i = 0;
     time_t t;
 
     time(&t);
 
-    for (int i = 0; spec[i] != 0; ++i)
+    for (; spec[i] != 0; ++i)
     {
         if (cron_parse(spec[i], s) == 0) {
             printf("%20s: %016llx %016llx %016llx %016llx %016llx %016llx\n",

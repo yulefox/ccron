@@ -1,4 +1,6 @@
 cron
+*.swp
+*.swo
 
 # Prerequisites
 *.d

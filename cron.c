@@ -25,7 +25,8 @@ static long long get_bits(int min, int max, int step)
         return ~(-1L << (max + 1)) & (-1L << min);
     }
 
-    for (int i = min; i <= max; i += step) {
+    int i = min;
+    for (; i <= max; i += step) {
         bits |= 1L << i;
     }
     return bits;
@@ -181,7 +182,8 @@ static long long parse_field(char *field, int bound[2])
 
     char *ranges[RANGE_MAX];
     int count = str_split(field, ",", ranges);
-    for (int i = 0; i < count; ++i) {
+    int i = 0;
+    for (; i < count; ++i) {
         bits |= parse_range(ranges[i], bound);
     }
     return bits;
@@ -216,7 +218,8 @@ int cron_parse(const char *spec, schedule_t s)
         return -1;
     }
 
-    for (int i = 0; i < TO_MAX; ++i)
+    int i = 0;
+    for (; i < TO_MAX; ++i)
     {
         s[i] = parse_field(fields[i], bounds[i]);
     }
