@@ -20,6 +20,8 @@ struct entry_t {
     time_t next;
 };
 
+time_t cron_duration(const char *spec);
+
 int cron_parse(const char *spec, schedule_t s);
 
 time_t cron_prev(schedule_t s, time_t t);

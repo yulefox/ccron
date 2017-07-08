@@ -189,6 +189,34 @@ static long long parse_field(char *field, int bound[2])
     return bits;
 }
 
+time_t cron_duration(const char *spec)
+{
+    if (spec == NULL || strlen(spec) == 0) {
+        printf("empty spec string");
+        return -1;
+    }
+
+    if (strlen(spec) >= 1024)
+    {
+        printf("ovenlength spec string");
+        return -1;
+    }
+
+
+    int count = str_split(spec_dup, " ", fields);
+    if (count != TO_MAX)
+    {
+        printf("invalid spec string");
+        return -1;
+    }
+
+    int i = 0;
+    for (; i < TO_MAX; ++i)
+    {
+        s[i] = parse_field(fields[i], bounds[i]);
+    }
+}
+
 int cron_parse(const char *spec, schedule_t s)
 {
     if (spec == NULL || strlen(spec) == 0) {
