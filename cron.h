@@ -3,7 +3,6 @@
 #include <time.h>
 
 enum time_option {
-    TO_SECOND,
     TO_MINUTE,
     TO_HOUR,
     TO_DOM, // day of month

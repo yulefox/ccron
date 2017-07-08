@@ -9,12 +9,11 @@ static const int RANGE_MAX = 60;
 static const long long STAR_BIT = 1L << 63;
 
 static int bounds[TO_MAX][2] = {
-    {0, 59}, // seconds
     {0, 59}, // minutes
     {0, 23}, // hours
     {1, 31}, // dom
     {1, 12}, // months
-    {0, 6},  // dow
+    {1, 7},  // dow
 };
 
 static long long get_bits(int min, int max, int step) 
@@ -44,19 +43,23 @@ static int every(char *spec, schedule_t s)
     if (step <= 0 || step > 30) {
         return -1;
     }
-    s[TO_SECOND] = 1 << bounds[TO_SECOND][BOUND_MIN];
     s[TO_MINUTE] = get_bits(bounds[TO_MINUTE][BOUND_MIN], bounds[TO_MINUTE][BOUND_MAX], step);
-    s[TO_HOUR] = all_bits(bounds[TO_HOUR]);
-    s[TO_DOM] = all_bits(bounds[TO_DOM]);
-    s[TO_MONTH] = all_bits(bounds[TO_MONTH]);
-    s[TO_DOW] = all_bits(bounds[TO_DOW]);
+    s[TO_HOUR]   = all_bits(bounds[TO_HOUR]);
+    s[TO_DOM]    = all_bits(bounds[TO_DOM]);
+    s[TO_MONTH]  = all_bits(bounds[TO_MONTH]);
+    s[TO_DOW]    = all_bits(bounds[TO_DOW]);
     return 0;
 }
 
 static int day_matched(schedule_t s, const struct tm *st)
 {
+    int wday = st->tm_wday;
+
+    if (wday == 0) {
+        wday = 7;
+    }
     int dom_matched = ((1L << st->tm_mday) & s[TO_DOM]) > 0;
-    int dow_matched = ((1L << st->tm_wday) & s[TO_DOW]) > 0;
+    int dow_matched = ((1L << wday) & s[TO_DOW]) > 0;
 
     if ((s[TO_DOM] & STAR_BIT) || (s[TO_DOW] & STAR_BIT)) {
         return (dom_matched && dow_matched);
@@ -67,7 +70,6 @@ static int day_matched(schedule_t s, const struct tm *st)
 static int parse_descriptor(char *spec, schedule_t s)
 {
     if (strcmp(spec, "@yearly") == 0 || strcmp(spec, "@annually") == 0) {
-        s[TO_SECOND] = 1 << bounds[TO_SECOND][BOUND_MIN];
         s[TO_MINUTE] = 1 << bounds[TO_MINUTE][BOUND_MIN];
         s[TO_HOUR]   = 1 << bounds[TO_HOUR][BOUND_MIN];
         s[TO_DOM]    = 1 << bounds[TO_DOM][BOUND_MIN];
@@ -76,7 +78,6 @@ static int parse_descriptor(char *spec, schedule_t s)
         return 0;
     }
     if (strcmp(spec, "@monthly") == 0) {
-        s[TO_SECOND] = 1 << bounds[TO_SECOND][BOUND_MIN];
         s[TO_MINUTE] = 1 << bounds[TO_MINUTE][BOUND_MIN];
         s[TO_HOUR]   = 1 << bounds[TO_HOUR][BOUND_MIN];
         s[TO_DOM]    = 1 << bounds[TO_DOM][BOUND_MIN];
@@ -85,7 +86,6 @@ static int parse_descriptor(char *spec, schedule_t s)
         return 0;
     }
     if (strcmp(spec, "@weekly") == 0) {
-        s[TO_SECOND] = 1 << bounds[TO_SECOND][BOUND_MIN];
         s[TO_MINUTE] = 1 << bounds[TO_MINUTE][BOUND_MIN];
         s[TO_HOUR]   = 1 << bounds[TO_HOUR][BOUND_MIN];
         s[TO_DOM]    = all_bits(bounds[TO_DOM]);
@@ -94,7 +94,6 @@ static int parse_descriptor(char *spec, schedule_t s)
         return 0;
     }
     if (strcmp(spec, "@daily") == 0 || strcmp(spec, "@midnight") == 0) {
-        s[TO_SECOND] = 1 << bounds[TO_SECOND][BOUND_MIN];
         s[TO_MINUTE] = 1 << bounds[TO_MINUTE][BOUND_MIN];
         s[TO_HOUR]   = 1 << bounds[TO_HOUR][BOUND_MIN];
         s[TO_DOM]    = all_bits(bounds[TO_DOM]);
@@ -103,7 +102,6 @@ static int parse_descriptor(char *spec, schedule_t s)
         return 0;
     }
     if (strcmp(spec, "@hourly") == 0) {
-        s[TO_SECOND] = 1 << bounds[TO_SECOND][BOUND_MIN];
         s[TO_MINUTE] = 1 << bounds[TO_MINUTE][BOUND_MIN];
         s[TO_HOUR]   = all_bits(bounds[TO_HOUR]);
         s[TO_DOM]    = all_bits(bounds[TO_DOM]);
@@ -147,28 +145,20 @@ static long long parse_range(char *range, int bound[2])
         bits |= STAR_BIT;
     } else {
         start = atoi(low_and_high[0]);
-        if (num > 1)
-        { // single digit
+        if (num > 1) { // single digit
             end = atoi(low_and_high[1]);
-        }
-        else if (step == 1)
-        {
+        } else if (step == 1) {
             end = start;
-        }
-        else
-        {
+        } else {
             end = bound[1];
         }
-        if (start < bound[0])
-        {
+        if (start < bound[0]) {
             start = bound[0];
         }
-        if (end > bound[1])
-        {
+        if (end > bound[1]) {
             start = bound[1];
         }
-        if (start > end)
-        {
+        if (start > end) {
             end = start;
         }
     }
@@ -196,30 +186,27 @@ time_t cron_duration(const char *spec)
         return 0;
     }
 
-    if (strlen(spec) >= 1024)
-    {
+    if (strlen(spec) >= 1024) {
         printf("ovenlength spec string");
         return 0;
     }
 
     char spec_dup[1024];
-    char *fields[3];
+    char *fields[TO_MAX];
     strcpy(spec_dup, spec);
 
     int count = str_split(spec_dup, " ", fields);
-    if (count != 3)
-    {
+    if (count != TO_MAX) {
         printf("invalid spec string");
         return 0;
     }
 
     int i = 0;
-    time_t d[3];
-    for (; i < 3; ++i)
-    {
+    time_t d[TO_MONTH];
+    for (; i < TO_MONTH; ++i) {
         d[i] = atoi(fields[i]);
     }
-    return ((((d[0] * 24 + d[1]) * 60) + d[2]) * 60);
+    return ((((d[TO_DOM] * 24 + d[TO_HOUR]) * 60) + d[TO_MINUTE]) * 60);
 }
 
 int cron_parse(const char *spec, schedule_t s)
@@ -229,8 +216,7 @@ int cron_parse(const char *spec, schedule_t s)
         return -1;
     }
 
-    if (strlen(spec) >= 1024)
-    {
+    if (strlen(spec) >= 1024) {
         printf("ovenlength spec string");
         return -1;
     }
@@ -245,15 +231,13 @@ int cron_parse(const char *spec, schedule_t s)
     char *fields[TO_MAX];
 
     int count = str_split(spec_dup, " ", fields);
-    if (count != TO_MAX)
-    {
+    if (count != TO_MAX) {
         printf("invalid spec string");
         return -1;
     }
 
     int i = 0;
-    for (; i < TO_MAX; ++i)
-    {
+    for (; i < TO_MAX; ++i) {
         s[i] = parse_field(fields[i], bounds[i]);
     }
     return 0;
@@ -287,15 +271,13 @@ WRAP:
         st.tm_min = 0;
         st.tm_sec = 0;
         t = mktime(&st);
-        --t;
+        t -= 60;
         localtime_r(&t, &st);
 
-        if (st.tm_mon == (bounds[TO_MONTH][BOUND_MAX] - 1))
-        {
+        if (st.tm_mon == (bounds[TO_MONTH][BOUND_MAX] - 1)) {
             goto WRAP;
         }
-        if (st.tm_mon == -1)
-        {
+        if (st.tm_mon == -1) {
             st.tm_mon = bounds[TO_MONTH][BOUND_MAX] - 1;
             --(st.tm_year);
             t = mktime(&st);
@@ -305,87 +287,57 @@ WRAP:
     }
 
     // day of month/week
-    while (!day_matched(s, &st))
-    {
+    while (!day_matched(s, &st)) {
         int mon = st.tm_mon;
-        if (subtracted == 0)
-        {
+        if (subtracted == 0) {
             ++subtracted;
             st.tm_hour = 0;
             st.tm_min = 0;
             st.tm_sec = 0;
             t = mktime(&st);
-            --t;
+            t -= 60;
         }
-        else
-        {
+        else {
             t -= 86400;
         }
         localtime_r(&t, &st);
 
-        if (st.tm_mon != mon)
-        {
+        if (st.tm_mon != mon) {
             goto WRAP;
         }
     }
 
     // hour
-    while (((1L << st.tm_hour) & s[TO_HOUR]) == 0)
-    {
-        if (subtracted == 0)
-        {
+    while (((1L << st.tm_hour) & s[TO_HOUR]) == 0) {
+        if (subtracted == 0) {
             ++subtracted;
             st.tm_min = 0;
             st.tm_sec = 0;
             t = mktime(&st);
-            --t;
-        }
-        else
-        {
+            t -= 60;
+        } else {
             t -= 3600;
         }
         localtime_r(&t, &st);
 
-        if (st.tm_hour == bounds[TO_HOUR][BOUND_MAX])
-        {
+        if (st.tm_hour == bounds[TO_HOUR][BOUND_MAX]) {
             goto WRAP;
         }
     }
 
     // minute
-    while (((1L << st.tm_min) & s[TO_MINUTE]) == 0)
-    {
-        if (subtracted == 0)
-        {
+    while (((1L << st.tm_min) & s[TO_MINUTE]) == 0) {
+        if (subtracted == 0) {
             ++subtracted;
             st.tm_sec = 0;
             t = mktime(&st);
-            --t;
-        }
-        else
-        {
+            t -= 60;
+        } else {
             t -= 60;
         }
         localtime_r(&t, &st);
 
-        if (st.tm_min == bounds[TO_MINUTE][BOUND_MAX])
-        {
-            goto WRAP;
-        }
-    }
-
-    // second
-    while (((1L << st.tm_sec) & s[TO_SECOND]) == 0)
-    {
-        if (subtracted == 0)
-        {
-            ++subtracted;
-        }
-        --t;
-        localtime_r(&t, &st);
-
-        if (st.tm_sec == bounds[TO_SECOND][BOUND_MAX])
-        {
+        if (st.tm_min == bounds[TO_MINUTE][BOUND_MAX]) {
             goto WRAP;
         }
     }
@@ -479,19 +431,6 @@ WRAP:
         localtime_r(&t, &st);
 
         if (st.tm_min == bounds[TO_MINUTE][BOUND_MIN]) {
-            goto WRAP;
-        }
-    }
-
-    // second
-    while (((1L << st.tm_sec) & s[TO_SECOND]) == 0) {
-        if (added == 0) {
-            ++added;
-        }
-        ++t;
-        localtime_r(&t, &st);
-
-        if (st.tm_sec == bounds[TO_SECOND][BOUND_MIN]) {
             goto WRAP;
         }
     }

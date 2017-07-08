@@ -17,17 +17,17 @@ int main(int argc, char **argv)
         "@every 5m",
         "@every 15m",
         "@every 30m",
-        "0 0 1,3,21,5-20/2 */5 1,10 *",
-        "9 1 /2 */5 1,10 *",
-        "9 1 3/2 */5 * 3",
+        "0 1,3,21,5-20/2 */5 1,10 *",
+        "1 /2 */5 1,10 *",
+        "0 0 * * 7",
         "@yearly",
         0,
     };
 
     char *spec_b[] = {
-        "0 0 10",
-        "1 0 60",
-        "0 1 2",
+        "10 0 1 0 0",
+        "60 0 1 * *",
+        "2 1 0 * *",
         0,
     };
 
@@ -39,8 +39,8 @@ int main(int argc, char **argv)
     for (; spec_a[i] != 0; ++i)
     {
         if (cron_parse(spec_a[i], s) == 0) {
-            printf("%20s: %016llx %016llx %016llx %016llx %016llx %016llx\n",
-                   spec_a[i], s[0], s[1], s[2], s[3], s[4], s[5]);
+            printf("%20s: %016llx %016llx %016llx %016llx %016llx\n",
+                   spec_a[i], s[0], s[1], s[2], s[3], s[4]);
             cron_next(s, t);
             cron_prev(s, t);
         } else {
