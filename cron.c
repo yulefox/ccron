@@ -247,15 +247,12 @@ time_t cron_prev(schedule_t s, time_t t)
 {
     int subtracted = 0;
     struct tm st;
-    char ts[20];
 
     localtime_r(&t, &st);
 
     int year_limit = st.tm_year - 2;
 
 WRAP:
-    strftime(ts, 20, "%F %T", &st);
-
     // year
     if (st.tm_year < year_limit) {
         return 0;
@@ -341,9 +338,6 @@ WRAP:
             goto WRAP;
         }
     }
-
-    strftime(ts, 20, "%F %T", &st);
-    printf("prev: %s\n", ts);
     return t;
 }
 
@@ -351,15 +345,12 @@ time_t cron_next(schedule_t s, time_t t)
 {
     int added = 0;
     struct tm st;
-    char ts[20];
 
     localtime_r(&t, &st);
 
     int year_limit = st.tm_year + 2;
 
 WRAP:
-    strftime(ts, 20, "%F %T", &st);
-
     // year
     if (st.tm_year > year_limit) {
         return 0;
@@ -434,8 +425,5 @@ WRAP:
             goto WRAP;
         }
     }
-
-    strftime(ts, 20, "%F %T", &st);
-    printf("next: %s\n", ts);
     return t;
 }

@@ -32,7 +32,9 @@ int main(int argc, char **argv)
     };
 
     int i = 0;
-    time_t t;
+    time_t t, pt, nt;
+    struct tm st;
+    char ts[20];
 
     time(&t);
 
@@ -41,8 +43,14 @@ int main(int argc, char **argv)
         if (cron_parse(spec_a[i], s) == 0) {
             printf("%20s: %016llx %016llx %016llx %016llx %016llx\n",
                    spec_a[i], s[0], s[1], s[2], s[3], s[4]);
-            cron_next(s, t);
-            cron_prev(s, t);
+            pt = cron_prev(s, t);
+            localtime_r(&pt, &st);
+            strftime(ts, 20, "%F %T", &st);
+            printf("prev: %ld %s\n", pt, ts);
+            nt = cron_next(s, t);
+            localtime_r(&nt, &st);
+            strftime(ts, 20, "%F %T", &st);
+            printf("next: %ld %s\n", nt, ts);
         } else {
             printf("%20s: INVALID SPEC\n",
                    spec_a[i]);
