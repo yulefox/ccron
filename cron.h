@@ -4,7 +4,7 @@
 
 #ifdef __cplusplus
 #if __cplusplus
-exter "C" {
+extern "C" {
 #endif
 #endif
 
@@ -61,4 +61,3 @@ time_t cron_next(schedule_t s, time_t t);
 }
 #endif
 #endif
-
