@@ -2,6 +2,12 @@
 
 #include <time.h>
 
+#ifdef __cplusplus
+#if __cplusplus
+exter "C" {
+#endif
+#endif
+
 enum time_option {
     TO_MINUTE,
     TO_HOUR,
@@ -49,3 +55,10 @@ time_t cron_prev(schedule_t s, time_t t);
 /// @return time stamp, 0 for error.
 ///
 time_t cron_next(schedule_t s, time_t t);
+
+#ifdef __cplusplus
+#if __cplusplus
+}
+#endif
+#endif
+
