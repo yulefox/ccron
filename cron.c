@@ -193,28 +193,33 @@ time_t cron_duration(const char *spec)
 {
     if (spec == NULL || strlen(spec) == 0) {
         printf("empty spec string");
-        return -1;
+        return 0;
     }
 
     if (strlen(spec) >= 1024)
     {
         printf("ovenlength spec string");
-        return -1;
+        return 0;
     }
 
+    char spec_dup[1024];
+    char *fields[3];
+    strcpy(spec_dup, spec);
 
     int count = str_split(spec_dup, " ", fields);
-    if (count != TO_MAX)
+    if (count != 3)
     {
         printf("invalid spec string");
-        return -1;
+        return 0;
     }
 
     int i = 0;
-    for (; i < TO_MAX; ++i)
+    time_t d[3];
+    for (; i < 3; ++i)
     {
-        s[i] = parse_field(fields[i], bounds[i]);
+        d[i] = atoi(fields[i]);
     }
+    return ((((d[0] * 24 + d[1]) * 60) + d[2]) * 60);
 }
 
 int cron_parse(const char *spec, schedule_t s)

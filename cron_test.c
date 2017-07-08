@@ -1,11 +1,11 @@
 #include "cron.h"
 #include <stdio.h>
 
-int _main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     schedule_t s;
 
-    char *spec[] = {
+    char *spec_a[] = {
         "@annually",
         "@monthly",
         "@weekly",
@@ -24,22 +24,36 @@ int _main(int argc, char **argv)
         0,
     };
 
+    char *spec_b[] = {
+        "0 0 10",
+        "1 0 60",
+        "0 1 2",
+        0,
+    };
+
     int i = 0;
     time_t t;
 
     time(&t);
 
-    for (; spec[i] != 0; ++i)
+    for (; spec_a[i] != 0; ++i)
     {
-        if (cron_parse(spec[i], s) == 0) {
+        if (cron_parse(spec_a[i], s) == 0) {
             printf("%20s: %016llx %016llx %016llx %016llx %016llx %016llx\n",
-                   spec[i], s[0], s[1], s[2], s[3], s[4], s[5]);
+                   spec_a[i], s[0], s[1], s[2], s[3], s[4], s[5]);
             cron_next(s, t);
             cron_prev(s, t);
         } else {
             printf("%20s: INVALID SPEC\n",
-                   spec[i]);
+                   spec_a[i]);
         }
+    }
+
+    for (i = 0; spec_b[i] != 0; ++i)
+    {
+        time_t d = cron_duration(spec_b[i]);
+        printf("%20s: %ld\n",
+               spec_b[i], d);
     }
     return 0;
 }
