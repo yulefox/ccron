@@ -7,6 +7,7 @@ int main(int argc, char **argv)
 
     char *spec_a[] = {
         "@annually",
+        "@yearly",
         "@monthly",
         "@weekly",
         "@daily",
@@ -20,7 +21,10 @@ int main(int argc, char **argv)
         "0 1,3,21,5-20/2 */5 1,10 *",
         "1 /2 */5 1,10 *",
         "0 0 * * 7",
-        "@yearly",
+        "/5 * * * *",
+        "* * * * *",
+        "*/5 * * * *",
+        "0/5 * * * *",
         0,
     };
 
@@ -32,11 +36,11 @@ int main(int argc, char **argv)
     };
 
     int i = 0;
-    time_t t, pt, nt;
+    time_t t = 1499676600, pt, nt;
     struct tm st;
     char ts[20];
 
-    time(&t);
+    //time(&t);
 
     for (; spec_a[i] != 0; ++i)
     {

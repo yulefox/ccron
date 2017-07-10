@@ -145,7 +145,7 @@ static long long parse_range(char *range, int bound[2])
         bits |= STAR_BIT;
     } else {
         start = atoi(low_and_high[0]);
-        if (num > 1) { // single digit
+        if (num > 1) { // range
             end = atoi(low_and_high[1]);
         } else if (step == 1) {
             end = start;
@@ -248,6 +248,7 @@ time_t cron_prev(schedule_t s, time_t t)
     int subtracted = 0;
     struct tm st;
 
+    t = (t - 1) - (t - 1) % 60;
     localtime_r(&t, &st);
 
     int year_limit = st.tm_year - 2;
@@ -322,22 +323,21 @@ WRAP:
         }
     }
 
-    // minute
+    // minute & second
     while (((1L << st.tm_min) & s[TO_MINUTE]) == 0) {
         if (subtracted == 0) {
             ++subtracted;
             st.tm_sec = 0;
             t = mktime(&st);
-            t -= 60;
-        } else {
-            t -= 60;
         }
+        t -= 60;
         localtime_r(&t, &st);
 
         if (st.tm_min == bounds[TO_MINUTE][BOUND_MAX]) {
             goto WRAP;
         }
     }
+
     return t;
 }
 
@@ -411,8 +411,8 @@ WRAP:
         }
     }
 
-    // minute
-    while (((1L << st.tm_min) & s[TO_MINUTE]) == 0) {
+    // minute & second
+    while (((1L << st.tm_min) & s[TO_MINUTE]) == 0 || st.tm_sec > 0) {
         if (added == 0) {
             ++added;
             st.tm_sec = 0;
@@ -425,5 +425,6 @@ WRAP:
             goto WRAP;
         }
     }
+
     return t;
 }
